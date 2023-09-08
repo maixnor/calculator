@@ -14,14 +14,30 @@ fn main() -> io::Result<()> {
     let (first, operator, second) = split_basic(&buffer);
     let result = match operator {
         Operator::Plus => first + second,
+        Operator::Minus => first - second,
+        Operator::Times => first * second,
+        Operator::DividedBy => first / second,
     };
 
     println!("{:?}", result);
     Ok(())
 }
 
+/// expression may not have a newline "\n" at the end
+fn split_basic(expression: &str) -> (i32, Operator, i32) {
+    let input: Vec<&str> = expression.split(" ").collect();
+    let first = input.get(0).unwrap().parse::<i32>().unwrap();
+    let operator = input.get(1).unwrap().parse::<Operator>().unwrap();
+    let second = input.get(2).unwrap().parse::<i32>().unwrap();
+    (first, operator, second)
+}
+
+#[derive(Debug, PartialEq, Eq)]
 enum Operator {
     Plus,
+    Minus,
+    Times,
+    DividedBy,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -33,6 +49,9 @@ impl FromStr for Operator {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "+" => Ok(Operator::Plus),
+            "-" => Ok(Operator::Minus),
+            "*" => Ok(Operator::Times),
+            "/" => Ok(Operator::DividedBy),
             _ => Err(ParseOperatorError),
         }
     }
@@ -48,23 +67,22 @@ fn full_result() {
     assert_eq!(result, 7)
 }
 
-fn split_basic(expression: &str) -> (i32, Operator, i32) {
-    let input: Vec<&str> = expression.split(" ").collect();
-    let first = input.get(0).unwrap().parse::<i32>().unwrap();
-    let operator = input.get(1).unwrap().parse::<Operator>().unwrap();
-    let second_str = input.get(2).unwrap();
-    println!("{}", second_str);
-    let second = second_str.parse::<i32>().unwrap();
-    (first, operator, second)
-}
-
 #[test]
-fn with_operator() {
+fn plus() {
     let input = "4 + 3";
     let (first, operator, second) = split_basic(input);
     let result = match operator {
         Operator::Plus => first + second,
+        _ => todo!(),
     };
 
     assert_eq!(result, 7)
+}
+
+#[test]
+fn parse_operator() {
+    assert_eq!(Operator::Plus, "+".parse::<Operator>().unwrap());
+    assert_eq!(Operator::Minus, "-".parse::<Operator>().unwrap());
+    assert_eq!(Operator::Times, "*".parse::<Operator>().unwrap());
+    assert_eq!(Operator::DividedBy, "/".parse::<Operator>().unwrap());
 }
