@@ -15,7 +15,11 @@
       in {
         devShell = pkgs.mkShell {
           buildInputs =
-            [ (rustVersion.override { extensions = [ "rust-src" ]; }) ];
+            [ 
+              (rustVersion.override { extensions = [ "rust-src" "rust-analyzer" "clippy" "cargo" "rust-docs" "llvm-tools"]; })
+              pkgs.helix
+              pkgs.nil
+            ];
         };
       });
 }
