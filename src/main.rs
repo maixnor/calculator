@@ -1,17 +1,48 @@
 use std::{
-    io::{self},
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+    path::PathBuf,
     str::FromStr,
 };
 
+use clap::Parser;
+
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long, value_name = "FILE")]
+    input_filename: Option<PathBuf>,
+    #[arg(short, long, value_name = "FILE")]
+    output_filename: Option<PathBuf>,
+}
+
 fn main() -> io::Result<()> {
-    println!("Hello, world!");
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer)?;
+    let cli = Cli::parse();
 
-    // remove \n at the end of the buffer
-    buffer.pop();
+    let input: Box<dyn BufRead> = if let Some(input_filename) = cli.input_filename {
+        Box::new(BufReader::new(File::open(input_filename)?))
+    } else {
+        Box::new(BufReader::new(io::stdin()))
+    };
 
-    let (first, operator, second) = split_basic(&buffer);
+    let mut output: Box<dyn Write> = if let Some(output_filename) = cli.output_filename {
+        Box::new(File::create(output_filename)?)
+    } else {
+        Box::new(io::stdout())
+    };
+
+    // Process input line by line and write the result to output
+    Ok(for line in input.lines() {
+        let line = line?;
+        let processed_line = match process_line(&line) {
+            Ok(res) => res,
+            Err(_) => format!("your input: '{:?}' was not okay", line),
+        };
+        writeln!(output, "{}", processed_line)?;
+    })
+}
+
+fn process_line(line: &str) -> Result<String, ParseOperatorError> {
+    let (first, operator, second) = split_basic(&line);
     let result = match operator {
         Operator::Plus => first + second,
         Operator::Minus => first - second,
@@ -19,8 +50,7 @@ fn main() -> io::Result<()> {
         Operator::DividedBy => first / second,
     };
 
-    println!("{:?}", result);
-    Ok(())
+    Ok(result.to_string())
 }
 
 /// expression may not have a newline "\n" at the end
